@@ -1,0 +1,62 @@
+Paramiko: Port Forwarding Around A NAT Router
+Source : <a href="https://stackoverflow.com/questions/18968069/paramiko-port-forwarding-around-a-nat-router/19039769#19039769">Link</a>
+
+
+LOCAL: A local machine that will create an ssh connection and issue commands on a REMOTE box.
+PROXY: An EC-2 instance with ssh access to both LOCAL and REMOTE.
+REMOTE: A remote machine sitting behind a NAT Router (inaccessible by LOCAL, but will open a connection to PROXY and allow LOCAL to tunnel to it).
+Port Forwarding Steps (via command line)
+Create an ssh connection from REMOTE to PROXY to forward ssh traffic on port 22 on the REMOTE machine to port 8000 on the PROXY server.
+
+# Run from the REMOTE machine
+ssh -N -R 0.0.0.0:8000:localhost:22 PROXY_USER@PROXY_HOSTNAME
+
+Create an ssh tunnel from LOCAL to PROXY and forward ssh traffic from LOCAL:1234 to PROXY:8000 (which then forwards to REMOTE:22).
+
+# Run from LOCAL machine
+ssh -L 1234:localhost:8000 PROXY_USER@PROXY_HOSTNAME
+
+Create the forwarded ssh connection from LOCAL to REMOTE (via PROXY).
+
+# Run from LOCAL machine in a new terminal window
+ssh -p 1234 REMOTE_USER@localhost
+
+# I have now ssh'd to the REMOTE box and can run commands
+
+
+
+==========================================================================================
+from paramiko import SSHClient
+
+# Set up the proxy (forwarding server) credentials
+proxy_hostname = 'your.proxy.hostname'
+proxy_username = 'proxy-username'
+proxy_port = 22
+
+# Instantiate a client and connect to the proxy server
+proxy_client = SSHClient()
+proxy_client.load_host_keys('~/.ssh/known_hosts/')
+proxy_client.connect(
+    proxy_hostname,
+    port=proxy_port,
+    username=proxy_username,
+    key_filename='/path/to/your/private/key/'
+)
+
+# Get the client's transport and open a `direct-tcpip` channel passing
+# the destination hostname:port and the local hostname:port
+transport = proxy_client.get_transport()
+dest_addr = ('0.0.0.0', 8000)
+local_addr = ('127.0.0.1', 1234)
+channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
+
+# Create a NEW client and pass this channel to it as the `sock` (along with
+# whatever credentials you need to auth into your REMOTE box
+remote_client = SSHClient()
+remote_client.load_host_keys(hosts_file)
+remote_client.connect('localhost', port=1234, username='remote_username', sock=channel)
+
+# `remote_client` should now be able to issue commands to the REMOTE box
+remote_client.exec_command('pwd')
+
+==========================================================================================
