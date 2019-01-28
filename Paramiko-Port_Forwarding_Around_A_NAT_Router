@@ -1,6 +1,5 @@
 Paramiko: Port Forwarding Around A NAT Router
-Source : <a href="https://stackoverflow.com/questions/18968069/paramiko-port-forwarding-around-a-nat-router/19039769#19039769">Link</a>
-
+Source : https://stackoverflow.com/questions/18968069/paramiko-port-forwarding-around-a-nat-router/19039769#19039769
 
 LOCAL: A local machine that will create an ssh connection and issue commands on a REMOTE box.
 PROXY: An EC-2 instance with ssh access to both LOCAL and REMOTE.
