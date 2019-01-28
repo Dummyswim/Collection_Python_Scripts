@@ -6,10 +6,9 @@ host = 'remote_host'
 username = 'User'
 password = 'User_password'
 
-files = ['all_files.tgz']
-remote_images_path = '/homes/User'
+listof_files = ['all_files.tgz']
+remote_path = '/homes/User'
 local_path = '/User/dir_1'
-
 
 # Create an SSH client
 ssh = paramiko.SSHClient()
@@ -20,16 +19,14 @@ ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 # Connect to the client
 ssh.connect(hostname=host, username=username, password=password)
 
-print stdout.readlines()
-
+# Open sftp channel
 sftp = ssh.open_sftp()
 for file in files:
-    file_remote = remote_images_path + file
-    file_local = local_path + file
-
-    print file_remote + '>>>' + file_local
-
+    #Creating full path.
+    file_path_on_remote = remote_path + file
+    file_path_on_local = local_path + file
+    print 'Getting the files from' file_remote + 'to' + file_local
     sftp.get(file_remote, file_local)
-
+#If control is out of loop, close the connection
 sftp.close()
 ssh.close()
